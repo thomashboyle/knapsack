@@ -1,5 +1,3 @@
-# This is a sample Python script.
-
 import algorithms
 
 def print_table(table):
@@ -12,6 +10,7 @@ def print_decision_table(table):
 items1 = [(9, 7),  (7, 9), (8, 6), (6, 2), (6, 5), (5, 3), (3, 4)]
 itemstxtbk = [(6, 2),  (5, 3), (8, 6), (9, 7), (6, 5), (7, 9), (3, 4)]
 itemstxtbk2 = [(3, 4),  (5, 3), (8, 6), (9, 7), (6, 5), (6, 2), (7, 9)]
+itemsTricky = [(2, 1), (20,20)]
 
 decisionsi1c9 = [0, 0, 0, 1, 0, 1, 1]
 
@@ -25,5 +24,5 @@ print_decision_table(decisions)
 print(algorithms.DP2(itemstxtbk, 9))
 print(algorithms.DP3(itemstxtbk, 9))
 print(algorithms.branch_and_bound(itemstxtbk, 9))
-
-
+print(algorithms.extended_greedy(itemsTricky, 20))
+print(algorithms.extended_greedy_improved(items1, 9))
