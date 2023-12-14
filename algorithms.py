@@ -124,6 +124,7 @@ def DP2(itemSet, capacity):
                                                    dpTable[subProblemCapacity])
     return dpTable
 
+
 def DP3(itemSet, capacity):
     solution = []
     solutionProfit = 0
@@ -217,3 +218,122 @@ def extended_greedy_improved(itemSet, capacity):
                     bestSolution[i] = 1
                     bestSolution[i + j + 1] = 1
     return bestSolution
+
+
+import networkx as nx
+import matplotlib.pyplot as plt
+
+class state:
+    def __init__(self, name, districts, state):
+        self.name = name
+        self.districts = sorted(enumerate(districts), key=lambda x: x[1])
+        self.stateVotes = state
+        self.solvedState = [0]
+        self.stateFlips = 0
+
+    def solveState(self):
+        votes = 0
+        stateFlipped = False
+        for _, district in self.districts:
+            votes += district
+            if not stateFlipped and votes >= self.stateVotes:
+                self.stateFlips = len(self.solvedState)
+                self.solvedState += [self.stateVotes, self.stateVotes]
+                stateFlipped = True
+            self.solvedState += [votes]
+        if not stateFlipped:
+            self.solvedState += [self.stateVotes, self.stateVotes]
+
+
+def makeGraph(states, votesNeeded):
+    G = nx.DiGraph()
+
+    states = sorted(enumerate(states), key=lambda x: len(x[1]), reverse=True)
+    stateLens = list(map(lambda x: len(x[1]) - 1, states))
+    votesLeft = [sum(stateLens[i+1:]) for i, _ in enumerate(states)]
+    # print(states)
+    maxVotes = 0
+    for i, people in enumerate(states[0][1]): # handle source node
+        if i + votesLeft[0] < votesNeeded: continue
+        if i > votesNeeded: break
+        # print("start-0", "1-" + str(i), i, people)
+        G.add_edge("start-0", "1-" + str(i), weight=people)
+    maxVotes += len(states[0][1])
+    
+    for i, (_, state) in enumerate(states[1:-1]):    # loop through states to create layers
+        # print(state)
+        for j, people in enumerate(state):      # loop through edges to be added
+            if people is None: continue
+            for ecVotes in range(max(0, votesNeeded - votesLeft[i+1] - j), min(maxVotes, votesNeeded-j+1)): # loop through nodes in layer 
+                # print(str(i+1) + "-" + str(ecVotes), str(i+2) + "-" + str(ecVotes+j), j, people)
+                G.add_edge(str(i+1) + "-" + str(ecVotes), str(i+2) + "-" + str(ecVotes+j), weight=people)
+        maxVotes += len(state) - 1
+        # G.add_edges_from([[(state.name + str(ecVotes), states[i+1].name + str(ecVotes+j), people) for j, people in enumerate(state)] for ecVotes in range(max)])
+    
+    for i, people in enumerate(states[-1][1]): # handle sink node
+        if i > votesNeeded: break # stop making nodes if greater than votes needed
+        # print(str(len(states) - 1) + "-" + str(votesNeeded-i), "end-" + str(votesNeeded), i, people)
+        G.add_edge(str(len(states) - 1) + "-" + str(votesNeeded-i), "end-" + str(votesNeeded), weight=people)
+
+    return G, [(i, j) for i, (j, _) in enumerate(states)]
+
+
+def makeGraph2(states, votesNeeded):
+    G = nx.DiGraph()
+    return G
+
+
+def pathTraceback(G, path, statesMap, country, showDetails=False):
+    weights = nx.get_edge_attributes(G, "weight")
+    prev = 0
+    for i, j in statesMap:
+        ecVotes = int(path[i+1].split('-')[1])
+        ecVotesFromState = ecVotes - prev
+        prev = ecVotes
+        peopleTowardsState = weights[path[i], path[i+1]]
+        
+        print("Move", peopleTowardsState, "to state", country[j].name, "to gain", ecVotesFromState, "electoral college votes")
+
+        if showDetails: # TODO fix
+            votes = 0
+            stateFlipped = False
+            for x in range(ecVotesFromState):
+                district = country[j].districts[x]
+                if not stateFlipped and votes + district[1] > country[j].stateVotes:
+                    print("\tput", country[j].stateVotes - votes, "people in district", district[0], "to win the state")
+                    if x > ecVotesFromState: break
+                    else:
+                        stateFlipped = True
+                        print("\t\tput remaining", votes + district[1] - country[j].stateVotes, "people in district", district[0])
+                else:
+                    print("\tput", district[1], "people in district", district[0])
+                
+                votes += district[1]
+
+
+def ECsolver(country, votesToFlip):
+    for s in country:
+        s.solveState()
+    L, statesMap = makeGraph(map(lambda x: x.solvedState, country), votesToFlip)
+    # nx.draw(L, with_labels=True)
+    # plt.show()
+    print(nx.dijkstra_path_length(L, "start-0", "end-" + str(votesToFlip)),
+          nx.dijkstra_path(L, "start-0", "end-" + str(votesToFlip)))
+    path = nx.dijkstra_path(L, "start-0", "end-" + str(votesToFlip))
+
+    weights=nx.get_edge_attributes(L, "weight")
+
+    pathTraceback(L, path, statesMap, country)
+
+
+
+l = [state("South Ruhspekt", [1, 4, 4, 7], 4), \
+     state("North Ruhspekt", [2, 3, 4, 6, 8], 8), \
+     state("New Bikesico", [9, 11, 16, 54], 5)]
+
+# l = [state("Boogville", [1, 3, 19], 3),
+#      state("Oogburg", [7], 3),
+#      state("Fellatown", [4, 5], 16)]
+
+ECsolver(l, 9)
+
