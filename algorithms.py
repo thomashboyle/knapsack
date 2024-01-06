@@ -317,13 +317,13 @@ def ECsolver(country, votesToFlip):
     L, statesMap = makeGraph(map(lambda x: x.solvedState, country), votesToFlip)
     # nx.draw(L, with_labels=True)
     # plt.show()
-    print(nx.dijkstra_path_length(L, "start-0", "end-" + str(votesToFlip)),
-          nx.dijkstra_path(L, "start-0", "end-" + str(votesToFlip)))
+    # print(nx.dijkstra_path_length(L, "start-0", "end-" + str(votesToFlip)),
+        #   nx.dijkstra_path(L, "start-0", "end-" + str(votesToFlip)))
     path = nx.dijkstra_path(L, "start-0", "end-" + str(votesToFlip))
 
     weights=nx.get_edge_attributes(L, "weight")
 
-    pathTraceback(L, path, statesMap, country)
+    # pathTraceback(L, path, statesMap, country)
 
 
 
@@ -335,5 +335,15 @@ l = [state("South Ruhspekt", [1, 4, 4, 7], 4), \
 #      state("Oogburg", [7], 3),
 #      state("Fellatown", [4, 5], 16)]
 
-ECsolver(l, 9)
+import random
+def newCountry(numStates, maxDistricts, seed=None):
+    random.seed(seed)
+    newCountry = []
+    for s in range(numStates):
+        newCountry += [state("State " + str(s), [random.randint(1, 1000) for _ in range(maxDistricts)], random.randint(100, 10000))]
+    return newCountry
+
+
+c = newCountry(50, 55)
+ECsolver(c, 278)
 
